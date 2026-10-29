@@ -147,8 +147,24 @@ tests/              offline tests
 - **EmbodiedSkillBench** — skill interfaces with explicit preconditions; source of the
   four headline metrics. arXiv:2610.16238
 - **Robo-Harness K1** — "perception as tools" for manipulation. arXiv:2609.29389
-- **LIBERO-Agent** — agent-native evaluation protocol. arXiv:2609.39507
+- **LIBERO-Agent** — agent-native evaluation *protocol* (not a dataset): 200 tasks with a
+  30-task primary suite separating perceptual / short-horizon / long-horizon ability, where
+  the agent chooses its own observations and issues native action commands.
+  **No official code as of 2026-10-29** — no code link in the arXiv entry, no matching repo.
+  arXiv:2609.39507
 - **ChunkAct** — action chunking for agentic robotics (cost-side baseline). arXiv:2610.18874
+
+## Reference implementations
+
+Useful when writing the LIBERO binding (checked 2026-10-29):
+
+- `nssmd/RoboRSI` — official repo of the RoboRSI paper; robot-agent harness with a CLI and a
+  local web console for LIBERO short-horizon evaluation. Closest to a working end-to-end
+  LIBERO agent harness.
+- `Peter-cuhk/lffbench` — learn-from-failure benchmark for VLM robot agents on LIBERO.
+- `ABC12345anouys/EvoBot` — agent plus reusable skill library on LIBERO (no LLM at runtime).
+- `dzj441/Libero-Agent` — created 10 days after the paper, no description; **unofficial and
+  unverified**, do not treat as the reference implementation.
 
 ## Citation
 
