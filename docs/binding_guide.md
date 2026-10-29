@@ -64,17 +64,30 @@ decision end the episode, which pollutes attribution.
 
 ## 3. SMART-Sim notes
 
-- The platform ships articulation-aware design: part-level semantics plus joint
-  constraints, generated programmatically. Bind `articulation()` straight to it —
-  that is the whole point of this repo.
+**Release status (checked 2026-10-29):**
+
+| Item | Finding |
+|---|---|
+| Public name | paper title says *SMART*, project page and assets say **γ-Art / γ-Sim** (same arXiv id 2610.07652); HF dir is `TeleEmbodied/SMART-Data`, page nav calls it γ-Art-Data — cite both names or reviewers will not find it |
+| Engine | **IsaacLab-based** ("articulation-aware IsaacLab-based simulation platform") → expect GPU, USD assets, Isaac Sim install cost |
+| Code | project page links `github.com/TeleHuman/TeleIllusion`, which returns **404** (absent or private) |
+| Sim assets | HF `assets/` holds only preview PNGs plus `dataset-links-coming-soon.svg`, which renders as three "coming soon" buttons: Code / Project / arXiv |
+| Dataset | released: ~1M episodes, ~500M frames, 4,600 h, 1,122 scenes, 5 robot setups, 23 of the **88** object categories in the asset library, 2,507 articulated objects, LeRobot v3.0 |
+
+**Consequence: go/no-go check #2 currently FAILS — the closed-loop simulator is not
+obtainable.** The demos support offline work only (skill induction, distillation, VLA
+pretraining), not the closed-loop annotated-vs-rgb-only ablation this repo is built for.
+Watch the project page and the HF repo; re-run the checklist when either changes.
+
+- If annotations turn out to exist only inside the data-generation path and are not
+  queryable at runtime, say so in the paper and fall back to `rgb_only` — that is a
+  finding, not a failure.
 - 44 atomic task types is your primitive vocabulary: start with 3 (`open door`,
   `pull drawer`, `turn knob`), not 44.
 - 2,507 articulated objects / 5 robot setups means category-level generalisation is
   available *for free* — hold out object categories, not just seeds.
 - Image resolution is the dominant token cost. Cap it (e.g. 256²) and re-encode before
   attaching; report the resolution you used.
-- If annotations exist only inside the data-generation path and are not queryable,
-  say so in the paper and fall back to `rgb_only` — that is a finding, not a failure.
 
 ## 4. LIBERO notes (control arm)
 
