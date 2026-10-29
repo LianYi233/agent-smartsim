@@ -1,0 +1,14 @@
+# Core deps (offline-runnable: the mock env + scripted policy need nothing else)
+numpy>=1.24
+Pillow>=9.0
+
+# Live API agent (install when you actually call a model)
+# openai>=1.30
+
+# LIBERO control arm (heavy; see scripts/setup_libero.sh)
+# robosuite==1.4.0
+# bddl
+# libero
+
+# Dev
+# pytest>=7.0

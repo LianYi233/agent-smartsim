@@ -1,0 +1,26 @@
+{
+  "name": "smartsim_main",
+  "env": {
+    "name": "smartsim",
+    "params": {
+      "max_steps": 200
+    }
+  },
+  "agent": {
+    "mode": "api",
+    "model": "gpt-5.6",
+    "temperature": 0.0,
+    "max_turns": 24,
+    "max_output_tokens": 2048
+  },
+  "tasks": [
+    "PUT_REAL_TASK_ID_HERE"
+  ],
+  "seeds": [0, 1, 2],
+  "conditions": [
+    { "name": "rgb_only", "annotated": false },
+    { "name": "annotated_spec_only", "annotated": true, "annotated_executor": false },
+    { "name": "annotated", "annotated": true, "annotated_executor": true }
+  ],
+  "run": { "out_dir": "runs" }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "smoke_mock",
+  "env": {
+    "name": "mock",
+    "params": { "max_steps": 40, "noise": 0.01, "image_size": 64 }
+  },
+  "agent": {
+    "mode": "scripted",
+    "model": "gpt-5.6",
+    "temperature": 0.0,
+    "max_turns": 20,
+    "max_output_tokens": 2048
+  },
+  "tasks": ["door_hinge_01", "drawer_slide_01", "knob_01"],
+  "seeds": [0, 1],
+  "conditions": [
+    { "name": "rgb_only", "annotated": false },
+    { "name": "annotated", "annotated": true, "annotated_executor": true }
+  ],
+  "run": { "out_dir": "runs" }
+}
