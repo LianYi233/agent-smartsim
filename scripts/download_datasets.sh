@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Dataset downloader for this project, targeting an NFS/local volume (default /data1/datasets).
 #
+# Uses the huggingface_hub PYTHON API, not the CLI: huggingface-cli was removed in
+# huggingface_hub 1.0 (replaced by `hf`), so any script that shells out to it breaks
+# on a fresh install. snapshot_download() is the stable surface.
+#
 # Sizes measured 2026-10-29 via the HF API:
 #   TeleEmbodied/SMART-Data              2,028.76 GB total  -> NEVER download whole; cherry-pick zips
 #   physical-intelligence/libero            34.94 GB        -> original LIBERO hdf5 demos
@@ -24,8 +28,10 @@ usage: scripts/download_datasets.sh <target> [args]
 env:
   DATASETS_DIR=/data1/datasets    default target
   HF_ENDPOINT=...                 default https://hf-mirror.com
+  HF_HOME=...                     default $DATASETS_DIR/.hf_home (keeps cache off $HOME)
+  PYTHON=...                      force a specific interpreter (must import huggingface_hub)
 
-NOTE: SMART-Sim itself (simulator + scene/object assets) is NOT on the Hub yet;
+NOTE: SMART-Sim itself (simulator + scene/object assets) is NOT released yet;
 the upstream assets/ dir only holds preview images and a
 "dataset-links-coming-soon" placeholder. Datasets give you demonstrations, not
 a closed-loop environment.
@@ -38,31 +44,82 @@ esac
 
 DATASETS_DIR="${DATASETS_DIR:-/data1/datasets}"
 export HF_ENDPOINT="${HF_ENDPOINT:-https://hf-mirror.com}"
+export HF_HOME="${HF_HOME:-$DATASETS_DIR/.hf_home}"
 
-if ! command -v huggingface-cli >/dev/null 2>&1; then
-  if command -v pip >/dev/null 2>&1; then
-    echo "==> installing huggingface_hub[cli] + hf_transfer"
-    pip install -U "huggingface_hub[cli]" hf_transfer
-  else
-    echo "huggingface-cli not found and pip is unavailable; install it first:" >&2
-    echo "  pip install -U 'huggingface_hub[cli]' hf_transfer" >&2
-    exit 1
-  fi
+die() { printf 'error: %s\n' "$*" >&2; exit 1; }
+
+find_python() { # a python that can already import huggingface_hub
+  local c
+  for c in ${PYTHON:-} python3 python; do
+    [ -n "$c" ] || continue
+    command -v "$c" >/dev/null 2>&1 || continue
+    if "$c" -c "import huggingface_hub" >/dev/null 2>&1; then
+      printf '%s\n' "$c"; return 0
+    fi
+  done
+  return 1
+}
+
+HF_PY="$(find_python || true)"
+if [ -z "$HF_PY" ]; then
+  BASE_PY="${PYTHON:-$(command -v python3 || command -v python || true)}"
+  [ -n "$BASE_PY" ] || die "no python found; install python3 first"
+  echo "==> huggingface_hub missing in '$BASE_PY'; installing"
+  "$BASE_PY" -m pip install -U huggingface_hub hf_transfer \
+    || die "pip install failed; if this is a managed env, run: pip install --user huggingface_hub hf_transfer"
+  HF_PY="$(find_python || true)"
+  [ -n "$HF_PY" ] || die "installed but still not importable. Retry with PYTHON=/path/to/python $0 $*"
 fi
-export HF_HUB_ENABLE_HF_TRANSFER="${HF_HUB_ENABLE_HF_TRANSFER:-1}"
+echo "python: $HF_PY  (huggingface_hub $("$HF_PY" -c 'import huggingface_hub as h; print(h.__version__)'))"
 
-echo "target: $DATASETS_DIR   endpoint: $HF_ENDPOINT"
+# hf_transfer only when actually importable, otherwise hub raises at download time.
+if "$HF_PY" -c "import hf_transfer" >/dev/null 2>&1; then
+  export HF_HUB_ENABLE_HF_TRANSFER=1
+else
+  unset HF_HUB_ENABLE_HF_TRANSFER || true
+fi
+
+echo "target: $DATASETS_DIR   endpoint: $HF_ENDPOINT   cache: $HF_HOME"
 if [ -d "$DATASETS_DIR" ]; then
   df -h "$DATASETS_DIR" | tail -1
 else
   echo "creating $DATASETS_DIR"
-  mkdir -p "$DATASETS_DIR" || { echo "cannot create $DATASETS_DIR (permissions?)" >&2; exit 1; }
+  mkdir -p "$DATASETS_DIR" || die "cannot create $DATASETS_DIR (permissions? try: sudo mkdir -p $DATASETS_DIR && sudo chown \$USER $DATASETS_DIR)"
 fi
+mkdir -p "$HF_HOME"
 
-download() { # <repo> <local-dir> [extra hf args...]
+download() { # <repo> <local-dir> [allow_pattern ...]
   local repo="$1" dir="$2"; shift 2
-  echo "==> $repo -> $dir"
-  huggingface-cli download "$repo" --repo-type dataset --local-dir "$dir" "$@"
+  local patterns=("$@")
+
+  if [ "$repo" = "TeleEmbodied/SMART-Data" ] && [ "${#patterns[@]}" -eq 0 ]; then
+    die "refusing to download TeleEmbodied/SMART-Data in full (2.03 TB).
+       pass task zips instead, e.g.:
+         $0 smart-tasks Franka_single/atomic/left_open_laptop_lid.zip"
+  fi
+
+  if [ "${#patterns[@]}" -gt 0 ]; then
+    echo "==> $repo -> $dir"
+    printf '    pattern: %s\n' "${patterns[@]}"
+  else
+    echo "==> $repo -> $dir  (full repo)"
+  fi
+
+  mkdir -p "$dir"
+  "$HF_PY" - "$repo" "$dir" ${patterns[@]+"${patterns[@]}"} <<'PY'
+import sys
+from huggingface_hub import snapshot_download
+
+repo, local_dir, *patterns = sys.argv[1:]
+path = snapshot_download(
+    repo_id=repo,
+    repo_type="dataset",
+    local_dir=local_dir,
+    allow_patterns=patterns or None,
+    max_workers=8,
+)
+print("    done:", path)
+PY
 }
 
 case "$1" in
@@ -76,7 +133,7 @@ case "$1" in
     download lerobot/libero_spatial_image "$DATASETS_DIR/libero/lerobot/spatial"
     download lerobot/libero_object_image  "$DATASETS_DIR/libero/lerobot/object"
     download lerobot/libero_goal_image    "$DATASETS_DIR/libero/lerobot/goal"
-    download lerobot/libero_10_image      "$DATASETS_DIR/libero/lerobot/libero10"
+    download lerobot/libero_10_image     "$DATASETS_DIR/libero/lerobot/libero10"
     ;;
   smart-tasks)
     # Cherry-pick SMART-Data task zips (1-12 GB each). The repo is 2 TB in total.
@@ -87,9 +144,7 @@ case "$1" in
       #   Franka_single/atomic/left_press_down_dispenser.zip     (press,  ~1.9 GB)
       #   Franka_single/atomic/left_turn_faucet_handle_left.zip  (rotate, ~2.2 GB)
     fi
-    args=()
-    for t in "$@"; do args+=(--include "$t"); done
-    download TeleEmbodied/SMART-Data "$DATASETS_DIR/SMART-Data" "${args[@]}"
+    download TeleEmbodied/SMART-Data "$DATASETS_DIR/SMART-Data" "$@"
     ;;
   *)
     usage; exit 2 ;;
