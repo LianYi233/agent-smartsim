@@ -1,0 +1,25 @@
+{
+  "name": "libero-pro-control-arm",
+  "env": {
+    "name": "libero",
+    "params": {
+      "suites": ["libero_object", "libero_object_with_red_stick"],
+      "camera_size": 128,
+      "render_gpu_device": 0
+    }
+  },
+  "agent": {
+    "mode": "api",
+    "model": "gpt-5.6",
+    "max_turns": 20
+  },
+  "conditions": [
+    { "name": "rgb_only", "annotated": false }
+  ],
+  "tasks": [
+    "libero_object/REPLACE_ME_task_name_1",
+    "libero_object_with_red_stick/REPLACE_ME_same_task_name",
+    "libero_object_with_red_stick/REPLACE_ME_second_task_name"
+  ],
+  "seeds": [0, 1, 2, 3, 4]
+}
