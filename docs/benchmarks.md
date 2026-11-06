@@ -47,6 +47,34 @@ frequency, not a citation count. "with agent" = the same window plus `all:"agent
   exactly the axes where an LLM agent differs from a VLA, and the sim/real split is one
   protocol rather than two papers.
 
+**Task catalog** (from `task/RoboDojo/config/*.yml` and the official sim-tasks page,
+checked 2026-11-06; 42 tasks + 12 `_random` layout variants + 1 DLC entry):
+
+| Dimension | Tasks |
+|---|---|
+| Generalization (12) | stack_bowls, push_T, pack_objects_into_box, fold_clothes, hang_mugs, sweep_blocks, pour_liquid_into_cup, make_toast, arrange_largest_number, sort_nesting_dolls_by_size, store_laptop_and_headphones, stack_blocks |
+| Memory (6) | cover_blocks, match_and_pick_from_conveyor, swap_blocks, swap_T, press_by_number, imitate_sorting_sequence |
+| Precision (8) | fasten_screws, plug_in_charger, insert_tubes, pour_balls_into_vase, play_Xylophone, deposit_coin, insert_key, build_tower |
+| Long-Horizon (8) | fill_pen_holder, classify_objects, put_bottles_into_dustbin, play_tic_tac_toe, fill_egg_holder, organize_table, make_kong, play_stacking_toy |
+| Open (8) | align_blocks, general_pickup, solve_equation, stack_blocks_by_language, classify_objects_by_language, pick_from_conveyor_by_image, store_tools_in_toolbox, pour_by_language |
+
+- Scenes: tabletop manipulation, configuration-driven; assets mix **rigid + articulated +
+  deformable** objects (laptop, toaster with bread shelf, number cards are declared
+  `Articulation:` in task configs); layout/material/lighting/background domain
+  randomisation is a first-class tool.
+- Embodiments: sim configs ship `franka` and `x5`; the real suite runs on Piper X, Piper
+  and ARX X5.
+- **Articulation status**: articulations appear as *props* inside broader tasks
+  (make_toast, store_laptop_and_headphones, press_by_number); there are no door/drawer/
+  cabinet-centric tasks and no part-level annotation interface. The niche stays open.
+- Hardware (official): Ubuntu 22.04, RAM >= 32 GB, GPU VRAM >= 16 GB (rendering-heavy
+  workflows need more), driver 570/580, CUDA 12.8, Isaac Sim 5.1 + Isaac Lab 2.3; Docker
+  image needs ~300 GB free. Assets come from **ModelScope** (fast in China); demo data is
+  separate (HDF5 523 GB, depth 4.5 TB) and **not needed for evaluation**.
+- A 24 GB RTX 4090 is above the stated minimum: single-env or 2-4 parallel envs is
+  realistic; the full leaderboard protocol (42 x 50 = 2,100 episodes) is not a one-GPU
+  job — run a task subset with 10-20 episodes per task for ablations.
+
 ### RoboTwin / RoboCasa
 - **RoboTwin** — dual-arm, SAPIEN, real2sim twin; the usual "second environment" for
   cross-embodiment claims.
