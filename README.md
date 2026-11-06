@@ -40,7 +40,7 @@ manipulation literature, but the two have not been crossed.
 ```bash
 pip install -e .                       # numpy + Pillow only
 python -m agent_smartsim.cli smoke     # offline end-to-end check
-python -m unittest discover -s tests   # 7 tests
+python -m unittest discover -s tests   # 22 tests
 ```
 
 `smoke` runs both agent conditions on the mock articulated object and prints:
@@ -62,6 +62,23 @@ python -m agent_smartsim.cli run --config configs/experiment_smartsim.example.js
     --max-episodes 4                   # debug first: 4 episodes, then scale
 python -m agent_smartsim.cli report --run runs/<dir>
 ```
+
+## Quickstart (LIBERO-PRO control arm, Linux + NVIDIA GPU)
+
+```bash
+bash scripts/setup_libero_pro.sh agent-libero   # robosuite 1.4.0 + Zxy-MLlab/LIBERO-PRO
+conda activate agent-libero && pip install -e .
+export MUJOCO_GL=egl
+agent-smartsim probe --suite libero_object --list       # enumerate tasks
+agent-smartsim probe --suite libero_object --gpu 0      # wiring check, no LLM
+agent-smartsim run --config configs/experiment_libero_pro.example.json --max-episodes 2
+```
+
+`probe` resets a real task, performs blind moves, prints the instruction, camera
+shapes and `check_success()` — run it before spending any tokens. Perturbation
+suites are ordinary benchmark names in the LIBERO-PRO fork
+(`libero_object_with_red_stick`, ...), so a perturbed twin costs one task id.
+Details and troubleshooting: [docs/libero_pro_runbook.md](docs/libero_pro_runbook.md).
 
 ---
 
