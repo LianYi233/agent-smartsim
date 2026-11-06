@@ -18,15 +18,24 @@ from .base import Env
 
 
 def _build_default_binding(**kwargs: Any) -> Any:
-    raise NotImplementedError(
-        "LIBERO binding not configured.\n"
-        "  1. bash scripts/setup_libero.sh   (installs robosuite/bddl/libero + datasets)\n"
-        "  2. implement EnvBinding in src/agent_smartsim/envs/bindings/libero_binding.py\n"
-        "     - LIBERO-PRO perturbations: swap object/initial-state/instruction/env\n"
-        "  3. return it here (or pass LiberoEnv(binding=...))\n"
-        "Notes: LIBERO success is a predicate, so `success()` is cheap; images come\n"
-        "from an off-screen renderer -- cap resolution, it dominates token cost."
-    )
+    """Build the real LIBERO/LIBERO-PRO binding.
+
+    ``kwargs`` go straight to LiberoProBinding, e.g.::
+
+        {"name": "libero",
+         "params": {"suites": ["libero_object", "libero_object_with_red_stick"],
+                    "camera_size": 128, "render_gpu_device": 0}}
+
+    ``suites`` decides standard vs. LIBERO-PRO perturbation: every
+    ``*_with_*`` suite is a perturbation of a base suite (object swaps,
+    distractors, moved initial states).
+    """
+    from .bindings.libero_pro_binding import LiberoProBinding
+
+    params = dict(kwargs)
+    params.setdefault("suites", ["libero_spatial", "libero_object"])
+    params.setdefault("camera_size", 128)
+    return LiberoProBinding(**params)
 
 
 class LiberoEnv(Env):
