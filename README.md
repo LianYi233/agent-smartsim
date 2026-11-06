@@ -140,6 +140,14 @@ tests/              offline tests
 
 ## Related work
 
+- **uni-robot-agent (OpenRUA)** — **the closest open harness** (Tsinghua × Berkeley, MIT,
+  repo created 2026-11-02, active): modular robot-use-agent harness with Codex/Claude Code
+  runtimes, a shared perception/motion/skill/episode tool layer, RoboDojo + LIBERO + real
+  dual-arm evaluation, depth/calibration and skill-library ablations, and trajectory export
+  for training. RGB-only realistic setting keeps only proprioception + calibration + URDF.
+  Candidate foundation for the LIBERO control arm: our contribution (articulation
+  annotations as typed tools, three-cell spec/executor design, failure attribution) sits
+  **on top of** it, not next to it. arXiv:2611.01560
 - **SMART / SMART-Sim** — articulated-object synthetic pretraining at scale (the
   environment this repo targets). arXiv:2610.07652
 - **LIBERO-PRO** — perturbations that separate memorisation from competence;
